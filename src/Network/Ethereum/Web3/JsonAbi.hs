@@ -21,7 +21,7 @@ module Network.Ethereum.Web3.JsonAbi (
   , eventId
   ) where
 
-import Crypto.Hash (Digest, Keccak_256, hash)
+--import Crypto.Hash (Digest, Keccak_256, hash)
 import qualified Data.Text.Encoding as T
 import qualified Data.Text          as T
 import Network.Ethereum.Web3.Internal
@@ -131,9 +131,9 @@ signature (DEvent name inputs _) = name <> "(" <> args inputs <> ")"
 -- | Localy compute Keccak-256 hash of given text
 sha3 :: Text -> Text
 {-# INLINE sha3 #-}
-sha3 x = T.pack (show digest)
-  where digest :: Digest Keccak_256
-        digest = hash (T.encodeUtf8 x)
+sha3 x = T.pack "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+  --where digest :: Digest Keccak_256
+  --      digest = hash (T.encodeUtf8 x)
 
 -- | Generate method selector by given method 'Delcaration'
 methodId :: Declaration -> Text
