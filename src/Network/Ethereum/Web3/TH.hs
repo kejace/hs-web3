@@ -278,9 +278,7 @@ mkDecl _ = return []
 -- | ABI to declarations converter
 quoteAbiDec :: String -> Q [Dec]
 quoteAbiDec abi_string = do
-  let abiPart = fromJust $ (abi_string ^? key "abi")
-      --abi_lbs = LT.encodeUtf8 . LT.pack . encode $ abiPart
-      abi_lbs = encode abiPart
+  let abi_lbs = encode . fromJust $ (abi_string ^? key "abi")
   case decode abi_lbs of
         Just (ContractABI abi) -> concat <$> mapM mkDecl (escape abi)
         _ -> fail "Unable to parse ABI!"
