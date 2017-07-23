@@ -58,6 +58,10 @@ import Data.List (groupBy, sortBy)
 import Data.Monoid (mconcat, (<>))
 import Data.ByteArray (Bytes)
 import Data.Aeson
+import Data.Aeson.Lens
+import Control.Lens
+import Data.HashMap.Lazy (elems)
+import Data.Maybe
 
 import Language.Haskell.TH.Quote
 import Language.Haskell.TH.Lib
@@ -273,11 +277,13 @@ mkDecl _ = return []
 
 -- | ABI to declarations converter
 quoteAbiDec :: String -> Q [Dec]
-quoteAbiDec abi_string =
-    case decode abi_lbs of
+quoteAbiDec abi_string = do
+  let abiPart = fromJust $ (abi_string ^? key "abi")
+      --abi_lbs = LT.encodeUtf8 . LT.pack . encode $ abiPart
+      abi_lbs = encode abiPart
+  case decode abi_lbs of
         Just (ContractABI abi) -> concat <$> mapM mkDecl (escape abi)
         _ -> fail "Unable to parse ABI!"
-  where abi_lbs = LT.encodeUtf8 (LT.pack abi_string)
 
 -- | ABI information string
 quoteAbiExp :: String -> ExpQ
