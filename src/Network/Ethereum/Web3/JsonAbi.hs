@@ -29,7 +29,6 @@ import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.Aeson.TH
 import Data.Aeson
-import Data.Aeson.Lens
 
 -- | Method argument
 data FunctionArg = FunctionArg
