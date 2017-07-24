@@ -60,7 +60,6 @@ import Data.ByteArray (Bytes)
 import Data.Aeson
 import Data.Aeson.Lens
 import Control.Lens
-import Data.HashMap.Lazy (elems)
 import Data.Maybe
 
 import Language.Haskell.TH.Quote

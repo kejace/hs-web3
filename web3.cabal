@@ -53,7 +53,6 @@ library
                      , lens-aeson
                      , lens
                      , text
-                     , unordered-containers
   default-extensions:  OverloadedStrings
   default-language:    Haskell2010
 
