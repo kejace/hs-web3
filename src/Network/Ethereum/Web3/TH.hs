@@ -278,9 +278,9 @@ mkDecl _ = return []
 quoteAbiDec :: String -> Q [Dec]
 quoteAbiDec abi_string = do
   let abi_lbs = encode . fromJust $ (abi_string ^? key "abi")
-  case decode abi_lbs of
-        Just (ContractABI abi) -> concat <$> mapM mkDecl (escape abi)
-        _ -> fail "Unable to parse ABI!"
+  case eitherDecode abi_lbs of
+        Right (ContractABI abi) -> concat <$> mapM mkDecl (escape abi)
+        Left err -> fail err
 
 -- | ABI information string
 quoteAbiExp :: String -> ExpQ
