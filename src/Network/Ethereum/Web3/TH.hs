@@ -58,6 +58,9 @@ import Data.List (groupBy, sortBy)
 import Data.Monoid (mconcat, (<>))
 import Data.ByteArray (Bytes)
 import Data.Aeson
+import Data.Aeson.Lens
+import Control.Lens
+import Data.Maybe
 
 import Language.Haskell.TH.Quote
 import Language.Haskell.TH.Lib
@@ -169,15 +172,17 @@ funEncodigD funName paramLen ident =
               [conP funName $ fmap varP vars]
               [|ident <> toDataBuilder $(tupE $ fmap varE vars)|]
 
-eventFilterD :: String -> [DecQ]
-eventFilterD topic0 = let addr = mkName "a" in
-  [ funD' (mkName "eventFilter") [wildP, varP addr]
-    [|Filter (Just $(varE addr))
-             (Just [Just topic0, Nothing])
-             Nothing
-             Nothing
-     |]
-  ]
+eventFilterD :: String -> Int -> [DecQ]
+eventFilterD topic0 n =
+  let addr = mkName "a"
+      indexedArgs = replicate n Nothing :: [Maybe String]
+  in [ funD' (mkName "eventFilter") [wildP, varP addr]
+       [|Filter (Just $(varE addr))
+                (Just $ [Just topic0] <> indexedArgs)
+                Nothing
+                Nothing
+       |]
+     ]
 
 funWrapper :: Bool
            -- ^ Is constant?
@@ -227,13 +232,14 @@ mkEvent :: Declaration -> Q [Dec]
 mkEvent eve@(DEvent name inputs _) = sequence
     [ dataD' eventName eventFields derivingD
     , instanceD' eventName encodingT (eventEncodigD eventName inputs)
-    , instanceD' eventName eventT    (eventFilterD (T.unpack $ eventId eve))
+    , instanceD' eventName eventT    (eventFilterD (T.unpack $ eventId eve) indexedFieldsCount)
     ]
   where eventName   = mkName (toUpperFirst (T.unpack name))
         derivingD   = [mkName "Show", mkName "Eq", mkName "Ord"]
         eventFields = normalC eventName (eventBangType <$> inputs)
         encodingT   = conT (mkName "ABIEncoding")
         eventT      = conT (mkName "Event")
+        indexedFieldsCount = length . filter eveArgIndexed $ inputs
 
 -- | Method delcarations maker
 mkFun :: Declaration -> Q [Dec]
@@ -273,11 +279,11 @@ mkDecl _ = return []
 
 -- | ABI to declarations converter
 quoteAbiDec :: String -> Q [Dec]
-quoteAbiDec abi_string =
-    case decode abi_lbs of
-        Just (ContractABI abi) -> concat <$> mapM mkDecl (escape abi)
-        _ -> fail "Unable to parse ABI!"
-  where abi_lbs = LT.encodeUtf8 (LT.pack abi_string)
+quoteAbiDec abi_string = do
+  let abi_lbs = encode . fromJust $ (abi_string ^? key "abi")
+  case eitherDecode abi_lbs of
+        Right (ContractABI abi) -> concat <$> mapM mkDecl (escape abi)
+        Left err -> fail err
 
 -- | ABI information string
 quoteAbiExp :: String -> ExpQ
